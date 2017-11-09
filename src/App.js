@@ -1,10 +1,11 @@
 import React, {Component} from 'react';
+
 // import logo from './logo.svg';
 import './App.css';
 
 function Square(props) {
     return (
-        <button className="square" onClick={props.onClick}>
+        <button className={"square " + ((props.whoWin && props.whoWin.squares.indexOf(props.idElement) > -1) ? 'line-win ' : ' ' ) + (props.iActive === (props.idElement+1) ? 'active' : '')} onClick={props.onClick}>
             {props.value}
         </button>
     );
@@ -24,7 +25,7 @@ function calculateWinner(squares) {
     for (let i = 0; i < lines.length; i++) {
         const [a, b, c] = lines[i];
         if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-            return squares[a];
+            return {identity: squares[a], squares: [a, b, c]};
         }
     }
     return null;
@@ -32,47 +33,23 @@ function calculateWinner(squares) {
 
 class Board extends Component {
     renderSquare(i) {
-        return <Square value={this.props.squares[i]} onClick={() => this.props.onClick(i)} />;
+        return <Square whoWin={this.props.whoWin} key={i} iActive={this.props.squares.iActive} idElement={i} value={this.props.squares.squares[i]} onClick={() => this.props.onClick(i)} />;
     }
-
     render() {
+        const loopRow = [1,2,3];
+        const loopCol = [1,2,3];
+        let sttCount = 0;
+        // console.log(this.props.whoWin);
+
         return (
             <div>
-                <div className="board-row">
-                    {this.renderSquare(0)}
-                    {this.renderSquare(1)}
-                    {this.renderSquare(2)}
-                    {this.renderSquare(3)}
-                    {this.renderSquare(4)}
-                </div>
-                <div className="board-row">
-                    {this.renderSquare(5)}
-                    {this.renderSquare(6)}
-                    {this.renderSquare(7)}
-                    {this.renderSquare(8)}
-                    {this.renderSquare(9)}
-                </div>
-                <div className="board-row">
-                    {this.renderSquare(10)}
-                    {this.renderSquare(11)}
-                    {this.renderSquare(12)}
-                    {this.renderSquare(13)}
-                    {this.renderSquare(14)}
-                </div>
-                <div className="board-row">
-                    {this.renderSquare(15)}
-                    {this.renderSquare(16)}
-                    {this.renderSquare(17)}
-                    {this.renderSquare(18)}
-                    {this.renderSquare(19)}
-                </div>
-                <div className="board-row">
-                    {this.renderSquare(20)}
-                    {this.renderSquare(21)}
-                    {this.renderSquare(22)}
-                    {this.renderSquare(23)}
-                    {this.renderSquare(24)}
-                </div>
+                {loopRow.map((row, i) =>
+                    <div className="board-row" key={i}>
+                        {loopCol.map((col, j) => (
+                            this.renderSquare(sttCount++)
+                        ))}
+                    </div>
+                )}
             </div>
         );
     }
@@ -83,10 +60,11 @@ class Game extends Component {
         super(props);
         this.state = {
             history: [{
-                squares: Array(25).fill(null),
+                squares: Array(9).fill(null),
             }],
             stepNumber: 0,
             xIsNext: true,
+            xReverse: false
         };
     }
 
@@ -118,7 +96,8 @@ class Game extends Component {
         this.setState({
             history: history.concat([{
                 squares: squares,
-                localtion: '(Col: ' + col + ', Row: ' + row + ')'
+                localtion: '(Col: ' + col + ', Row: ' + row + ')',
+                iActive: i,
             }]),
             stepNumber: history.length,
             xIsNext: !this.state.xIsNext,
@@ -132,10 +111,20 @@ class Game extends Component {
         });
     }
 
+    handleReverse(){
+        this.setState({
+            xReverse: !this.state.xReverse,
+        })
+    }
+
+    
+
+
     render() {
         const history = this.state.history;
         const current = history[this.state.stepNumber];
         const winner = calculateWinner(current.squares);
+        
         const moves = history.map((step, move) => {
             const desc = move ? 'Go to move #' + move + ' ' + step.localtion : 'Go to game start';
             return (
@@ -144,21 +133,30 @@ class Game extends Component {
                 </li>
             );
         });
+        if(this.state.xReverse){
+            moves.reverse();
+        }
+
         let status;
         if (winner) {
-            status = 'Winner: ' + winner;
+            status = 'Winner: ' + winner.identity;
         } else {
             status = 'Next player: ' + (this.state.xIsNext ? 'X' : 'O');
         }
 
         return (
-            <div className="game">
-                <div className="game-board">
-                    <Board squares={current.squares} onClick={(i) => this.handleClick(i)} />
-                </div>
-                <div className="game-info">
-                    <div>{ status }</div>
-                    <ol>{ moves }</ol>
+            <div>
+                <div className="game">
+                    <div className="game-board">
+                        <Board whoWin={winner} squares={current} onClick={(i) => this.handleClick(i)} />
+                    </div>
+                    <div className="game-info">
+                        <div>{ status }</div>
+                        <div>
+                            <button onClick={() => this.handleReverse()}>Reverse</button>
+                        </div>
+                        <ol>{ moves }</ol>
+                    </div>
                 </div>
             </div>
         );

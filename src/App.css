@@ -61,6 +61,14 @@ ol, ul {
     outline: none;
 }
 
+.square.active{
+    background-color: #ccc;
+}
+
+.square.line-win{
+    background-color: rgba(187,239,253,0.5) !important;
+}
+
 .kbd-navigation .square:focus {
     background: #ddd;
 }
